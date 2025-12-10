@@ -1,18 +1,10 @@
 import { pool } from "../lib/db.js";
-import { getUserById } from "./auth-service.js";
-
-export interface Post {
-  id: number;
-  userId: number;
-  title: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { getUserById } from "./user-service.js";
+import { Post } from "../types/post-types.js";
 
 export async function getAllPosts() {
   const result = await pool.query(
-    `SELECT id, userId, content, createdAt, updatedAt, username, likesCount
+    `SELECT *
      FROM posts 
      ORDER BY createdAt DESC`
   );
@@ -20,7 +12,7 @@ export async function getAllPosts() {
   return result.rows as Post[];
 }
 
-export async function getPostByUsername(username: string) {
+export async function getPostsByUsername(username: string) {
   const userResult = await pool.query(
     `SELECT id 
      FROM users 
@@ -33,7 +25,7 @@ export async function getPostByUsername(username: string) {
   const userId = userResult.rows[0].id;
 
   const postResult = await pool.query(
-    `SELECT id, userId, content, createdAt, updatedAt, username, likesCount
+    `SELECT *
      FROM posts 
      WHERE userId = $1
      ORDER BY createdAt DESC`,
@@ -41,6 +33,17 @@ export async function getPostByUsername(username: string) {
   )
 
   return postResult.rows as Post[];
+}
+
+export async function getPostById(postId: number) {
+  const result = await pool.query(
+    `SELECT *
+     FROM posts
+     WHERE id = $1`,
+    [postId]
+  )
+
+  return result.rows[0] as Post
 }
 
 export async function createPost(content: string, userId: number) {
@@ -53,11 +56,11 @@ export async function createPost(content: string, userId: number) {
   const postResult = await pool.query(
     `INSERT INTO posts (userId, content, username)
      VALUES ($1, $2, $3)
-     RETURNING id, userId, content, createdAt, updatedAt, username, likesCount`,
+     RETURNING *`,
     [userId, content, user.username]
   );
 
-  return postResult.rows as Post[];
+  return postResult.rows[0] as Post;
 }
 
 export async function updatePost(postId: number, content: string, userId: number) {
@@ -66,7 +69,7 @@ export async function updatePost(postId: number, content: string, userId: number
      SET content = $1, 
          updatedAt = NOW() 
      WHERE id = $2 AND userId = $3
-     RETURNING id, userId, content, createdAt, updatedAt, username`, 
+     RETURNING *`, 
     [content, postId, userId]
   );
 
@@ -80,5 +83,5 @@ export async function deletePost(postId: number, userId: number) {
     [postId, userId]
   );
 
-  return (result.rowCount?? 0) > 0
+  return (result.rowCount ?? 0) > 0
 }

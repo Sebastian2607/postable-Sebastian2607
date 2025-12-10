@@ -5,11 +5,11 @@ export async function loginHandler( req: Request, res: Response, next: NextFunct
   try {
     const { username, email, password } = req.body;
 
-    if (!email || !password) return res.status(400).json({ error: "Faltan datos obligatorios" });
+    if (!email || !password) return res.status(400).json({ ok: false, message: "Faltan datos obligatorios" });
 
     const result = await login({ username, email, password });
 
-    if (!result) return res.status(401).json({ error: "Credenciales inválidas" });
+    if (!result) return res.status(401).json({ ok: false, message: "Credenciales inválidas" });
 
     const { token } = result;
 
@@ -28,16 +28,15 @@ export async function signupHandler( req: Request, res: Response, next: NextFunc
       password,
       firstName = "Nombre",
       lastName = "Apellido",
-      role = "user"
     } = req.body;
 
-    if (!username || !email || !password) return res.status(400).json({ error: "Faltan datos obligatorios" });
+    if (!username || !email || !password) return res.status(400).json({ ok: false, message: "Faltan datos obligatorios" });
 
-    if (!email.includes("@")) return res.status(400).json({ error: "El email no es válido" });
+    if (!email.includes("@")) return res.status(400).json({ ok: false, message: "Email invalido" });
 
-    const result = await signup({ username, password, email, firstName, lastName, role });
+    const result = await signup({ username, password, email, firstName, lastName });
 
-    if (!result) return res.status(400).json({ error: "El usuario ya existe" });
+    if (!result) return res.status(400).json({ ok: false, message: "Usuario ya existe" });
 
     res.status(201).json({ ok: true, data: result });
   } catch (error) {
